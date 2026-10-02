@@ -1,0 +1,170 @@
+# ---------------------------------------------------------------
+# TASK CONFIGURATION
+# One task per agent defined in agents_configuration.yaml
+#
+#   content_retrieval_task       -> content_retriever_agent
+#   subtopic_identification_task -> subtopic_retriever_agent
+#   explanation_task             -> explanation_agent
+#   flow_diagram_task            -> flow_diagram_generator_agent
+#   final_document_task          -> final_summarizer_agent
+#
+# Runtime placeholder: {user_topic}
+# ---------------------------------------------------------------
+
+
+# Task for: content_retriever_agent (Topic Research Specialist)
+content_retrieval_task:
+  description: >
+    Retrieve the core content for the following topic:
+
+    {user_topic}
+
+    Cover only these areas:
+    - a clear definition of the topic
+    - why the topic exists and the problem it solves
+    - where it is used in the real world
+    - key terms a learner must know
+
+    Rules:
+    - Keep the information accurate and factual
+    - Use simple, learner-friendly language
+    - Do not add unnecessary history or deep internals
+    - Do not explain subtopics yet
+
+  expected_output: >
+    A structured research summary of the topic with clearly
+    labelled sections for Definition, Purpose, Real-World
+    Relevance and Key Terms.
+
+
+# Task for: subtopic_retriever_agent (Concept Decomposition Specialist)
+subtopic_identification_task:
+  description: >
+    Using the retrieved content for the topic "{user_topic}",
+    identify only the essential sub-concepts a learner must know.
+
+    Rules:
+    - Select a maximum of 5 to 7 subtopics
+    - Include only subtopics that are truly essential
+    - Arrange them in logical learning order (basic to advanced)
+    - Give a one-line reason why each subtopic matters
+    - Do not explain the subtopics in detail here
+
+  expected_output: >
+    An ordered list of 5 to 7 essential subtopics, each with a
+    one-line justification for its inclusion.
+
+
+# Task for: explanation_agent (Technical Concept Explainer)
+explanation_task:
+  description: >
+    Explain the main topic "{user_topic}" and each selected subtopic
+    at medium depth.
+
+    For the main topic and every subtopic provide:
+    - a crisp explanation in 4 to 6 sentences
+    - one short, concrete example or analogy
+    - a one-line takeaway
+
+    Rules:
+    - Use simple language, avoid academic jargon
+    - Do not write one-line shallow answers
+    - Do not write long essays
+    - Keep the subtopic order given by the previous task
+
+  expected_output: >
+    Medium-depth explanations for the main topic and each subtopic,
+    each section containing an explanation, an example and a
+    takeaway line.
+
+
+# Task for: flow_diagram_generator_agent (Technical Diagram Designer)
+flow_diagram_task:
+  description: |
+    Decide whether the topic "{user_topic}" genuinely benefits from a
+    flow diagram.
+
+    Draw a diagram ONLY if the topic is a process, pipeline,
+    lifecycle, workflow or architecture style concept.
+
+    If a diagram is justified, draw it as a TEXT diagram:
+    - Write each step inside square brackets, for example [Embed Query]
+    - Use --> for left-to-right flow
+    - Use a | on its own line followed by a v to drop down a level
+    - Keep the flow to 4 to 8 steps so it stays readable
+    - Label a branch or loop with a short word such as yes, no or retry
+    - Put the whole diagram inside a fenced code block using three
+      backticks, so the spacing is preserved in the final document
+    - After the diagram, add a legend with one short line per step
+    - State the exact section of the document where it should be placed
+
+    Character rules for the diagram, these matter for the .docx export:
+    - Use only plain ASCII: letters, digits, spaces and - > < | + v [ ] .
+    - Never use box drawing characters or Unicode arrows
+    - Never use curly braces anywhere in your answer
+    - Align the steps with ordinary spaces, never with tab characters
+
+    Shape to follow:
+
+    ```
+    [User Query]
+         |
+         v
+    [Embed Query] --> [Search Vector Store]
+                              |
+                              v
+                      [Build Prompt]
+                              |
+                              v
+                       [LLM Answer]
+    ```
+
+    You are producing text only. You have no image generation or file
+    writing ability, so never claim to have saved an image file and
+    never invent a file path.
+
+    If a diagram is NOT justified:
+    - Skip the diagram entirely
+    - Reply with the line "No diagram required" followed by a one
+      sentence reason
+
+  expected_output: |
+    Either a fenced ASCII flow diagram of 4 to 8 steps, followed by a
+    one-line-per-step legend and the section where it belongs, or an
+    explicit "No diagram required" decision with the reason.
+
+
+# Task for: final_summarizer_agent (Documentation Compiler)
+final_document_task:
+  description: |
+    Assemble all previous outputs for the topic "{user_topic}" into a
+    single, polished Markdown document.
+
+    The document must include, in this order:
+    - a level 1 heading with the topic name
+    - the core content sections from the research task
+    - the ordered list of essential subtopics
+    - the medium-depth explanations for the topic and each subtopic
+    - the text flow diagram placed in the section the diagram task
+      asked for, only if a diagram was actually produced
+
+    Rules:
+    - Use Markdown headings, # for the title and ## or ### for sections
+    - Use - for bullet points
+    - Preserve the subtopic ordering from the earlier tasks
+    - Do not duplicate content across sections
+    - Copy the diagram's fenced code block through character for
+      character, keeping every space and line break exactly as the
+      diagram task produced it, so the layout survives the export
+    - If the diagram task said "No diagram required", leave the
+      diagram out completely and do not mention its absence
+
+    Return the document body itself as your answer. The application
+    converts your Markdown into the .docx file, so do not save any
+    file and do not report a file path.
+
+  expected_output: |
+    The complete Markdown body of the learning document, with a title
+    heading, the research sections, the ordered subtopics, the
+    medium-depth explanations and the fenced text diagram in place if
+    one was produced.
