@@ -187,11 +187,4 @@ diagram at all, with no mention of its absence in the document.
 
 ---
 
-## Known gaps
 
-- No `.gitignore` at the project root. Before initialising git, add one covering at
-  minimum `.env`, `.conceptexplain/`, `__pycache__/`, `.crewai/`, and `outputs/` —
-  the API key is currently sitting in an untracked-but-unprotected `.env`.
-- Errors surface as text in the Gradio output box rather than being logged; a failed
-  run returns the exception type and message with no `.docx`.
-- `outputs/` grows unbounded — each run writes a new timestamped file.
