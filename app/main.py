@@ -8,6 +8,31 @@ from datetime import datetime
 from crew.create_crew import create_teaching_crew
 
 
+import logging
+from pathlib import Path
+
+# ---------------------------------------------------------
+# Logging Configuration
+# ---------------------------------------------------------
+
+ROOT_DIR = Path(__file__).resolve().parent
+LOG_DIR = ROOT_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOG_FILE = LOG_DIR / "log.txt"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding="utf-8"),
+        logging.StreamHandler()  # also prints logs to terminal
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+
 # ---------------------------------------------------------
 # Output directory
 # ---------------------------------------------------------
@@ -47,6 +72,7 @@ def create_docx(topic: str, content: str):
     Creates a DOCX file containing the final teaching output.
     """
 
+    logger.info(f"Creating DOCX for topic: {topic}")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     safe_topic = "".join(
@@ -134,6 +160,8 @@ def create_docx(topic: str, content: str):
 
     # Save
     document.save(file_path)
+    
+    logger.info(f"DOCX saved: {file_path}")
 
     return str(file_path)
 
@@ -147,8 +175,11 @@ def generate_teaching_content(topic: str):
     Runs the CrewAI teaching pipeline and generates
     both UI output and a DOCX file.
     """
+    
+    logger.info(f"Request received. Topic: {topic}")
 
     if not topic or not topic.strip():
+        logger.warning("Empty topic submitted")
         return (
             "Please enter a topic.",
             None
@@ -157,24 +188,30 @@ def generate_teaching_content(topic: str):
     try:
 
         # Create Crew
+        logger.info("Creating teaching crew")
         teaching_crew = create_teaching_crew()
 
         # Run Crew - the topic entered in the UI is interpolated into
         # every {user_topic} placeholder in task_configuration.yaml
+        logger.info("Starting CrewAI execution")
         result = teaching_crew.kickoff(
             inputs={
                 "user_topic": topic.strip()
             }
         )
+        
+        logger.info("CrewAI execution completed")
 
         # Convert CrewAI result to string
         final_output = str(result)
 
         # Create DOCX
+        logger.info("Generating DOCX file")
         docx_file = create_docx(
             topic=topic.strip(),
             content=final_output
         )
+        logger.info(f"DOCX created successfully: {docx_file}")
 
         return (
             final_output,
@@ -182,6 +219,8 @@ def generate_teaching_content(topic: str):
         )
 
     except Exception as e:
+        
+        logger.exception("Error during content generation")
 
         error_message = (
             f"Error while generating teaching content:\n\n"
@@ -248,5 +287,5 @@ with gr.Blocks(title="AI Teaching Assistant") as demo:
 # ---------------------------------------------------------
 
 if __name__ == "__main__":
-
+    logger.info("AI Teaching Assistant application started")
     demo.launch()
